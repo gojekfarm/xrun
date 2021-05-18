@@ -69,7 +69,7 @@ func (s *GRPCServerSuite) TestGRPCServer() {
 			}
 
 			s.NoError(m.Add(GRPCServer(GRPCServerOptions{
-				Server: srv,
+				Server:   srv,
 				Listener: l,
 				PreStart: func() {
 					s.T().Log("PreStart called")
@@ -118,14 +118,4 @@ func (m *mockListener) Close() error {
 
 func (m *mockListener) Addr() net.Addr {
 	return m.Called().Get(0).(net.Addr)
-}
-
-type badAddr struct{}
-
-func (b badAddr) Network() string {
-	return "tcp"
-}
-
-func (b badAddr) String() string {
-	return "bad address"
 }

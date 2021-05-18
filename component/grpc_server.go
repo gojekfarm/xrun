@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// GRPCServerOptions holds options for GRPCServer
 type GRPCServerOptions struct {
 	Server   *grpc.Server
 	Listener net.Listener

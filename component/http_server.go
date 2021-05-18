@@ -7,6 +7,7 @@ import (
 	"github.com/gojekfarm/xrun"
 )
 
+// HTTPServerOptions holds options for HTTPServer
 type HTTPServerOptions struct {
 	Server   *http.Server
 	PreStart func()
