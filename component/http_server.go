@@ -14,6 +14,7 @@ type HTTPServerOptions struct {
 	PreStop  func()
 }
 
+// HTTPServer is a helper which returns an xrun.ComponentFunc to start an http.Server
 func HTTPServer(opts HTTPServerOptions) xrun.ComponentFunc {
 	srv := opts.Server
 	ps := opts.PreStart
