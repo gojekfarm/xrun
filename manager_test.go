@@ -112,7 +112,7 @@ func (s *ManagerSuite) TestNewManager() {
 
 			errCh := make(chan error, 1)
 			go func() {
-				errCh <- m.Start(ctx)
+				errCh <- m.Run(ctx)
 			}()
 
 			time.Sleep(1 * time.Second)
@@ -134,7 +134,7 @@ func (s *ManagerSuite) TestAddNewComponentAfterStop() {
 
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- m.Start(ctx)
+		errCh <- m.Run(ctx)
 	}()
 
 	time.Sleep(1 * time.Second)
@@ -154,7 +154,7 @@ func (s *ManagerSuite) TestAddNewComponentAfterStart() {
 
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- m.Start(ctx)
+		errCh <- m.Run(ctx)
 	}()
 
 	time.Sleep(1 * time.Second)

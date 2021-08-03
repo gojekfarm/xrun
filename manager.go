@@ -8,13 +8,13 @@ import (
 	"time"
 )
 
-// Manager helps to start multiple components
+// Manager helps to run multiple components
 // and waits for them to complete
 type Manager interface {
 	Component
 
-	// Add will include the Component, and the Component will be
-	// started when Start is called.
+	// Add will include the Component, and the Component will
+	// start running when Run is called.
 	Add(Component) error
 }
 
@@ -63,10 +63,10 @@ func (m *manager) Add(c Component) error {
 	return nil
 }
 
-// Start starts running the component. The component will stop running
-// when the context is closed. Start blocks until the context is closed or
+// Run starts running the registered components. The components will stop running
+// when the context is closed. Run blocks until the context is closed or
 // an error occurs.
-func (m *manager) Start(ctx context.Context) (err error) {
+func (m *manager) Run(ctx context.Context) (err error) {
 	m.internalCtx, m.internalCancel = context.WithCancel(ctx)
 
 	defer func() {
@@ -103,7 +103,7 @@ func (m *manager) startComponent(c Component) {
 	m.wg.Add(1)
 	go func() {
 		defer m.wg.Done()
-		if err := c.Start(m.internalCtx); err != nil {
+		if err := c.Run(m.internalCtx); err != nil {
 			m.errChan <- err
 		}
 	}()

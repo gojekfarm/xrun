@@ -16,7 +16,7 @@ func TestAll(t *testing.T) {
 	errCh := make(chan error, 1)
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		errCh <- r.Start(ctx)
+		errCh <- r.Run(ctx)
 	}()
 
 	cancel()

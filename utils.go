@@ -6,8 +6,8 @@ import (
 )
 
 // All is a utility function which creates a new Manager
-// and adds all the components to it. Calling .Start()
-// on returned ComponentFunc will call Start on the Manager
+// and adds all the components to it. Calling .Run()
+// on returned ComponentFunc will call Run on the Manager
 func All(shutdownTimeout time.Duration, components ...Component) ComponentFunc {
 	m := NewManager(WithGracefulShutdownTimeout(shutdownTimeout))
 	for _, c := range components {
@@ -16,6 +16,6 @@ func All(shutdownTimeout time.Duration, components ...Component) ComponentFunc {
 		_ = m.Add(c)
 	}
 	return func(ctx context.Context) error {
-		return m.Start(ctx)
+		return m.Run(ctx)
 	}
 }

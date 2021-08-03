@@ -1,6 +1,6 @@
 # xrun [![build][github-workflow-badge]][github-workflow] [![PkgGoDev][pkg-go-dev-xrun-badge]][pkg-go-dev-xrun] [![Go Report Card][go-report-card-badge]][go-report-card]
 
-> Utilities around starting multiple components
+> Utilities around running multiple components
 > which are long running components, example: 
 > an HTTP server or a background worker
 
