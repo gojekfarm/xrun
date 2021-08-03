@@ -105,7 +105,7 @@ func (s *HTTPServerSuite) TestHTTPServer() {
 			errCh := make(chan error, 1)
 			ctx, cancel := context.WithCancel(context.Background())
 			go func() {
-				errCh <- m.Start(ctx)
+				errCh <- m.Run(ctx)
 			}()
 
 			time.Sleep(50 * time.Millisecond)
