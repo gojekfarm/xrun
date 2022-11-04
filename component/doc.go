@@ -2,45 +2,34 @@
 Package component contains some commonly used implementations
 of long-running components like an HTTP server.
 
-	package component
+	package main
 
 	import (
 		"context"
-		"net"
+		"fmt"
+		"net/http"
+		"os"
+		"os/signal"
 
-		"github.com/gojekfarm/xrun"
-		"google.golang.org/grpc"
+		"github.com/gojekfarm/xrun/component"
 	)
 
-	// GRPCServerOptions holds options for GRPCServer
-	type GRPCServerOptions struct {
-		Server   *grpc.Server
-		Listener net.Listener
-	}
+	func main() {
+		c := component.HTTPServer(component.HTTPServerOptions{
+			Server: &http.Server{},
+			PreStart: func() {
+				fmt.Println("starting server")
+			},
+			PreStop: func() {
+				fmt.Println("stopping server")
+			},
+		})
 
-	// GRPCServer is a helper which returns an xrun.ComponentFunc to run a grpc.Server
-	func GRPCServer(opts GRPCServerOptions) xrun.ComponentFunc {
-		srv := opts.Server
-		l := opts.Listener
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+		defer stop()
 
-		return func(ctx context.Context) error {
-			errCh := make(chan error, 1)
-			go func() {
-				if err := srv.Serve(l); err != nil && err != grpc.ErrServerStopped {
-					errCh <- err
-				}
-			}()
-
-			select {
-			case <-ctx.Done():
-			case err := <-errCh:
-
-				return err
-			}
-
-			srv.GracefulStop()
-
-			return nil
+		if err := c.Run(ctx); err != nil {
+			os.Exit(1)
 		}
 	}
 
