@@ -27,3 +27,5 @@ jobs:
             ${{ runner.os }}-go-
       - name: Test
         run: go test ./...
+      - name: Test Experimental SubModule
+        run: cd ./component/x && go test ./... && cd ../..
