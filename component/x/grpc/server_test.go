@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gojekfarm/xrun"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/nettest"
@@ -26,21 +27,41 @@ func (s *ServerTestSuite) TestServer() {
 	testcases := []struct {
 		name                string
 		wantErr             bool
-		wantBadListener     bool
+		newListener         func() (net.Listener, error)
 		wantShutdownTimeout bool
 	}{
 		{
 			name: "SuccessfulStart",
+			newListener: func() (net.Listener, error) {
+				l, _ := nettest.NewLocalListener("tcp")
+				return l, nil
+			},
 		},
 		{
-			name:            "BadListener",
-			wantBadListener: true,
-			wantErr:         true,
+			name: "BadListener",
+			newListener: func() (net.Listener, error) {
+				ml := &mockListener{}
+				ml.On("Accept").Return(nil, errors.New("unknown listen error"))
+				ml.On("Close").Return(nil)
+				return ml, nil
+			},
+			wantErr: true,
 		},
 		{
-			name:                "GracefulShutdownError",
+			name: "GracefulShutdownError",
+			newListener: func() (net.Listener, error) {
+				l, _ := nettest.NewLocalListener("tcp")
+				return l, nil
+			},
 			wantShutdownTimeout: true,
 			wantErr:             true,
+		},
+		{
+			name: "ListenerCreateError",
+			newListener: func() (net.Listener, error) {
+				return nil, errors.New("cannot create a listener")
+			},
+			wantErr: true,
 		},
 	}
 
@@ -53,24 +74,13 @@ func (s *ServerTestSuite) TestServer() {
 			m := xrun.NewManager(opts...)
 			srv := grpc.NewServer()
 
-			var l net.Listener
-			if t.wantBadListener {
-				ml := &mockListener{}
-				ml.On("Accept").Return(nil, errors.New("unknown listen error"))
-				ml.On("Close").Return(nil)
-				l = ml
-				defer func() {
-					ml.AssertExpectations(s.T())
-				}()
-			} else {
-				var err error
-				l, err = nettest.NewLocalListener("tcp")
-				s.NoError(err)
-			}
+			l, err := t.newListener()
 
 			s.NoError(m.Add(Server(Options{
-				Server:   srv,
-				Listener: l,
+				Server: srv,
+				NewListener: func() (net.Listener, error) {
+					return l, err
+				},
 				PreStart: func() {
 					s.T().Log("PreStart called")
 				},
@@ -96,6 +106,10 @@ func (s *ServerTestSuite) TestServer() {
 			} else {
 				s.NoError(<-errCh)
 			}
+
+			if ml, ok := l.(*mockListener); ok {
+				ml.AssertExpectations(s.T())
+			}
 		})
 	}
 }
@@ -118,4 +132,12 @@ func (m *mockListener) Close() error {
 
 func (m *mockListener) Addr() net.Addr {
 	return m.Called().Get(0).(net.Addr)
+}
+
+func TestNewListener(t *testing.T) {
+	f := NewListener(":0")
+	l, err := f()
+
+	assert.NoError(t, err)
+	assert.NotNil(t, l)
 }
