@@ -3,12 +3,12 @@ package grpc
 import (
 	"context"
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"net"
 	"testing"
 	"time"
 
 	"github.com/gojekfarm/xrun"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/nettest"
