@@ -10,22 +10,27 @@ import (
 
 // Options holds options for Server
 type Options struct {
-	Server   *grpc.Server
-	Listener net.Listener
-	PreStart func()
-	PreStop  func()
-	PostStop func()
+	Server      *grpc.Server
+	NewListener func() (net.Listener, error)
+	PreStart    func()
+	PreStop     func()
+	PostStop    func()
 }
 
 // Server is a helper which returns a xrun.ComponentFunc to start a grpc.Server
 func Server(opts Options) xrun.ComponentFunc {
 	srv := opts.Server
-	l := opts.Listener
+	nl := opts.NewListener
 	ps := opts.PreStart
 	pst := opts.PreStop
 	pstp := opts.PostStop
 
 	return func(ctx context.Context) error {
+		l, err := nl()
+		if err != nil {
+			return err
+		}
+
 		errCh := make(chan error, 1)
 
 		go func(errCh chan error) {
@@ -55,5 +60,11 @@ func Server(opts Options) xrun.ComponentFunc {
 		}
 
 		return nil
+	}
+}
+
+func NewListener(address string) func() (net.Listener, error) {
+	return func() (net.Listener, error) {
+		return net.Listen("tcp", address)
 	}
 }
