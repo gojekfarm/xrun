@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/go-multierror"
 	"sync"
 	"time"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 // Manager helps to run multiple components
