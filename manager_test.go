@@ -120,7 +120,10 @@ func (s *ManagerSuite) TestNewManager() {
 		{
 			name: "ShutdownWhenOneComponentReturnsErrorOnExit",
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.EqualError(t, err, "shutdown error", i...)
+				return assert.EqualError(t, err, `1 error occurred:
+	* shutdown error
+
+`, i...)
 			},
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
@@ -140,7 +143,11 @@ func (s *ManagerSuite) TestNewManager() {
 		{
 			name: "ShutdownWhenMoreThanOneComponentReturnsErrorOnExit",
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.EqualError(t, err, "shutdown error 2", i...)
+				return assert.EqualError(t, err, `2 errors occurred:
+	* shutdown error 2
+	* shutdown error 1
+
+`, i...)
 			},
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {

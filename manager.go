@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"sync"
 	"time"
 )
@@ -124,17 +125,20 @@ func (m *manager) engageStopProcedure() error {
 	defer m.mu.Unlock()
 	m.stopping = true
 
-	var retErr error
+	var retErr *multierror.Error
 
 	go func() {
+		done := make(chan struct{}, 1)
 		go func() {
+			defer func() { done <- struct{}{} }()
 			for err := range m.errChan {
-				retErr = err
+				retErr = multierror.Append(retErr, err)
 			}
 		}()
 
 		m.wg.Wait()
 		close(m.errChan)
+		<-done
 		shutdownCancel()
 	}()
 
@@ -143,5 +147,5 @@ func (m *manager) engageStopProcedure() error {
 		return fmt.Errorf("not all components were shutdown completely within grace period(%s): %w", m.shutdownTimeout, err)
 	}
 
-	return retErr
+	return retErr.ErrorOrNil()
 }

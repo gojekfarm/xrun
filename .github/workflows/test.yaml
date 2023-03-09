@@ -26,6 +26,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Test
-        run: go test ./...
+        run: go test -race ./...
       - name: Test Experimental SubModule
-        run: cd ./component/x && go test ./... && cd ../..
+        run: cd ./component/x && go test -race ./... && cd ../..
