@@ -103,7 +103,7 @@ func (m *manager) startComponent(c Component) {
 	m.wg.Add(1)
 	go func() {
 		defer m.wg.Done()
-		if err := c.Run(m.internalCtx); err != nil {
+		if err := c.Run(m.internalCtx); err != nil && !errors.Is(err, context.Canceled) {
 			m.errChan <- err
 		}
 	}()
@@ -124,14 +124,24 @@ func (m *manager) engageStopProcedure() error {
 	defer m.mu.Unlock()
 	m.stopping = true
 
+	var retErr error
+
 	go func() {
+		go func() {
+			for err := range m.errChan {
+				retErr = err
+			}
+		}()
+
 		m.wg.Wait()
+		close(m.errChan)
 		shutdownCancel()
 	}()
 
 	<-m.shutdownCtx.Done()
-	if err := m.shutdownCtx.Err(); err != nil && err != context.Canceled {
+	if err := m.shutdownCtx.Err(); err != nil && !errors.Is(err, context.Canceled) {
 		return fmt.Errorf("not all components were shutdown completely within grace period(%s): %w", m.shutdownTimeout, err)
 	}
-	return nil
+
+	return retErr
 }
