@@ -104,12 +104,7 @@ func (m *Manager) startComponent(c Component) {
 }
 
 func (m *Manager) engageStopProcedure() error {
-	var shutdownCancel context.CancelFunc
-	if m.shutdownTimeout > 0 {
-		m.shutdownCtx, shutdownCancel = context.WithTimeout(context.Background(), m.shutdownTimeout)
-	} else {
-		m.shutdownCtx, shutdownCancel = context.WithCancel(context.Background())
-	}
+	shutdownCancel := m.cancelFunc()
 	defer shutdownCancel()
 
 	m.internalCancel()
@@ -119,19 +114,13 @@ func (m *Manager) engageStopProcedure() error {
 	m.stopping = true
 
 	var retErr *multierror.Error
+	retErrCh := make(chan *multierror.Error, 1)
 
+	go m.aggregateErrors(retErrCh)
 	go func() {
-		done := make(chan struct{}, 1)
-		go func() {
-			defer func() { done <- struct{}{} }()
-			for err := range m.errChan {
-				retErr = multierror.Append(retErr, err)
-			}
-		}()
-
 		m.wg.Wait()
 		close(m.errChan)
-		<-done
+		retErr = <-retErrCh
 		shutdownCancel()
 	}()
 
@@ -141,4 +130,22 @@ func (m *Manager) engageStopProcedure() error {
 	}
 
 	return retErr.ErrorOrNil()
+}
+
+func (m *Manager) cancelFunc() context.CancelFunc {
+	var shutdownCancel context.CancelFunc
+	if m.shutdownTimeout > 0 {
+		m.shutdownCtx, shutdownCancel = context.WithTimeout(context.Background(), m.shutdownTimeout)
+	} else {
+		m.shutdownCtx, shutdownCancel = context.WithCancel(context.Background())
+	}
+	return shutdownCancel
+}
+
+func (m *Manager) aggregateErrors(ch chan<- *multierror.Error) {
+	var r *multierror.Error
+	for err := range m.errChan {
+		r = multierror.Append(r, err)
+	}
+	ch <- r
 }
