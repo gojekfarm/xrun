@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -20,18 +21,18 @@ func TestManagerSuite(t *testing.T) {
 func (s *ManagerSuite) TestNewManager() {
 	testcases := []struct {
 		name       string
-		wantErr    bool
+		wantErr    assert.ErrorAssertionFunc
 		wantAddErr bool
 		components []Component
 		options    []Option
 	}{
 		{
 			name:    "WithZeroComponents",
-			wantErr: false,
+			wantErr: assert.NoError,
 		},
 		{
 			name:    "WithOneComponent",
-			wantErr: false,
+			wantErr: assert.NoError,
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
 					time.Sleep(3 * time.Second)
@@ -42,7 +43,7 @@ func (s *ManagerSuite) TestNewManager() {
 		},
 		{
 			name:    "WithErrorOnComponentStart",
-			wantErr: true,
+			wantErr: assert.Error,
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
 					return errors.New("start error")
@@ -52,7 +53,7 @@ func (s *ManagerSuite) TestNewManager() {
 		{
 			name:    "WithGracefulShutdownErrorOnOneComponent",
 			options: []Option{WithGracefulShutdownTimeout(5 * time.Second)},
-			wantErr: true,
+			wantErr: assert.Error,
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
 					time.Sleep(time.Second)
@@ -70,7 +71,7 @@ func (s *ManagerSuite) TestNewManager() {
 		{
 			name:    "WithGracefulShutdownForTwoLongRunningComponents",
 			options: []Option{WithGracefulShutdownTimeout(time.Minute)},
-			wantErr: false,
+			wantErr: assert.NoError,
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
 					time.Sleep(5 * time.Second)
@@ -88,13 +89,81 @@ func (s *ManagerSuite) TestNewManager() {
 		},
 		{
 			name:    "UndefinedGracefulShutdown",
-			wantErr: false,
+			wantErr: assert.NoError,
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
 					time.Sleep(5 * time.Second)
 					<-ctx.Done()
 					time.Sleep(5 * time.Second)
 					return nil
+				}),
+			},
+		},
+		{
+			name:    "ShutdownWhenComponentReturnsContextErrorAsItIs",
+			wantErr: assert.NoError,
+			components: []Component{
+				ComponentFunc(func(ctx context.Context) error {
+					time.Sleep(time.Second)
+					<-ctx.Done()
+					time.Sleep(2 * time.Second)
+					return nil
+				}),
+				ComponentFunc(func(ctx context.Context) error {
+					time.Sleep(time.Second)
+					<-ctx.Done()
+					time.Sleep(time.Second)
+					return ctx.Err()
+				}),
+			},
+		},
+		{
+			name: "ShutdownWhenOneComponentReturnsErrorOnExit",
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.EqualError(t, err, `1 error occurred:
+	* shutdown error
+
+`, i...)
+			},
+			components: []Component{
+				ComponentFunc(func(ctx context.Context) error {
+					time.Sleep(time.Second)
+					<-ctx.Done()
+					time.Sleep(2 * time.Second)
+					return nil
+				}),
+				ComponentFunc(func(ctx context.Context) error {
+					time.Sleep(time.Second)
+					<-ctx.Done()
+					time.Sleep(time.Second)
+					return errors.New("shutdown error")
+				}),
+			},
+		},
+		{
+			name: "ShutdownWhenMoreThanOneComponentReturnsErrorOnExit",
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.EqualError(t, err, `2 errors occurred:
+	* shutdown error 2
+	* shutdown error 1
+
+`, i...)
+			},
+			components: []Component{
+				ComponentFunc(func(ctx context.Context) error {
+					<-ctx.Done()
+					time.Sleep(2 * time.Second)
+					return nil
+				}),
+				ComponentFunc(func(ctx context.Context) error {
+					<-ctx.Done()
+					time.Sleep(3 * time.Second)
+					return errors.New("shutdown error 1")
+				}),
+				ComponentFunc(func(ctx context.Context) error {
+					<-ctx.Done()
+					time.Sleep(2 * time.Second)
+					return errors.New("shutdown error 2")
 				}),
 			},
 		},
@@ -118,11 +187,7 @@ func (s *ManagerSuite) TestNewManager() {
 			time.Sleep(1 * time.Second)
 			cancel()
 
-			if err := <-errCh; t.wantErr {
-				s.Error(err)
-			} else {
-				s.NoError(err)
-			}
+			t.wantErr(s.T(), <-errCh)
 		})
 	}
 }

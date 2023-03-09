@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 // Manager helps to run multiple components
@@ -103,7 +105,7 @@ func (m *manager) startComponent(c Component) {
 	m.wg.Add(1)
 	go func() {
 		defer m.wg.Done()
-		if err := c.Run(m.internalCtx); err != nil {
+		if err := c.Run(m.internalCtx); err != nil && !errors.Is(err, context.Canceled) {
 			m.errChan <- err
 		}
 	}()
@@ -124,14 +126,27 @@ func (m *manager) engageStopProcedure() error {
 	defer m.mu.Unlock()
 	m.stopping = true
 
+	var retErr *multierror.Error
+
 	go func() {
+		done := make(chan struct{}, 1)
+		go func() {
+			defer func() { done <- struct{}{} }()
+			for err := range m.errChan {
+				retErr = multierror.Append(retErr, err)
+			}
+		}()
+
 		m.wg.Wait()
+		close(m.errChan)
+		<-done
 		shutdownCancel()
 	}()
 
 	<-m.shutdownCtx.Done()
-	if err := m.shutdownCtx.Err(); err != nil && err != context.Canceled {
+	if err := m.shutdownCtx.Err(); err != nil && !errors.Is(err, context.Canceled) {
 		return fmt.Errorf("not all components were shutdown completely within grace period(%s): %w", m.shutdownTimeout, err)
 	}
-	return nil
+
+	return retErr.ErrorOrNil()
 }
