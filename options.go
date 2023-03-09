@@ -10,11 +10,11 @@ const (
 )
 
 // Option changes behaviour of Manager
-type Option func(*manager)
+type Option func(*Manager)
 
 // WithGracefulShutdownTimeout allows max timeout after which Manager exits
 func WithGracefulShutdownTimeout(timeout time.Duration) Option {
-	return func(m *manager) {
+	return func(m *Manager) {
 		m.shutdownTimeout = timeout
 	}
 }
