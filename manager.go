@@ -12,12 +12,12 @@ import (
 
 // NewManager creates a Manager and applies provided Option
 func NewManager(opts ...Option) *Manager {
-	m := &Manager{
-		shutdownTimeout: NoTimeout,
-	}
+	m := &Manager{shutdownTimeout: NoTimeout}
+
 	for _, o := range opts {
-		o(m)
+		o.apply(m)
 	}
+
 	return m
 }
 

@@ -75,21 +75,16 @@ func (s *ServerTestSuite) TestServer() {
 			srv := grpc.NewServer()
 
 			l, err := t.newListener()
+			st := s.T()
 
 			s.NoError(m.Add(Server(Options{
 				Server: srv,
 				NewListener: func() (net.Listener, error) {
 					return l, err
 				},
-				PreStart: func() {
-					s.T().Log("PreStart called")
-				},
-				PreStop: func() {
-					s.T().Log("PreStop called")
-				},
-				PostStop: func() {
-					s.T().Log("PostStop called")
-				},
+				PreStart: func() { st.Log("PreStart called") },
+				PreStop:  func() { st.Log("PreStop called") },
+				PostStop: func() { st.Log("PostStop called") },
 			})))
 
 			errCh := make(chan error, 1)

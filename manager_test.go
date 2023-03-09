@@ -52,7 +52,7 @@ func (s *ManagerSuite) TestNewManager() {
 		},
 		{
 			name:    "WithGracefulShutdownErrorOnOneComponent",
-			options: []Option{WithGracefulShutdownTimeout(5 * time.Second)},
+			options: []Option{ShutdownTimeout(5 * time.Second)},
 			wantErr: assert.Error,
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
@@ -70,7 +70,7 @@ func (s *ManagerSuite) TestNewManager() {
 		},
 		{
 			name:    "WithGracefulShutdownForTwoLongRunningComponents",
-			options: []Option{WithGracefulShutdownTimeout(time.Minute)},
+			options: []Option{ShutdownTimeout(time.Minute)},
 			wantErr: assert.NoError,
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {

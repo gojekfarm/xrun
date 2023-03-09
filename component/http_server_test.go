@@ -87,18 +87,17 @@ func (s *HTTPServerSuite) TestHTTPServer() {
 		s.Run(t.name, func() {
 			var opts []xrun.Option
 			if t.wantShutdownTimeout {
-				opts = append(opts, xrun.WithGracefulShutdownTimeout(time.Nanosecond))
+				opts = append(opts, xrun.ShutdownTimeout(time.Nanosecond))
 			}
+
 			m := xrun.NewManager(opts...)
+			st := s.T()
+
 			s.NoError(m.Add(HTTPServer(
 				HTTPServerOptions{
-					Server: t.server,
-					PreStart: func() {
-						s.T().Log("PreStart called")
-					},
-					PreStop: func() {
-						s.T().Log("PreStop called")
-					},
+					Server:   t.server,
+					PreStart: func() { st.Log("PreStart called") },
+					PreStop:  func() { st.Log("PreStop called") },
 				},
 			)))
 
