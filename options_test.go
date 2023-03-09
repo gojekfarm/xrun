@@ -10,6 +10,6 @@ import (
 func TestWithGracefulShutdownTimeout(t *testing.T) {
 	expected := time.Minute
 
-	m := NewManager(WithGracefulShutdownTimeout(expected))
-	assert.Equal(t, expected, m.(*manager).shutdownTimeout)
+	m := NewManager(ShutdownTimeout(expected))
+	assert.Equal(t, expected, m.shutdownTimeout)
 }

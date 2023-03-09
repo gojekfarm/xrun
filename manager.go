@@ -10,28 +10,20 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
-// Manager helps to run multiple components
-// and waits for them to complete
-type Manager interface {
-	Component
-
-	// Add will include the Component, and the Component will
-	// start running when Run is called.
-	Add(Component) error
-}
-
 // NewManager creates a Manager and applies provided Option
-func NewManager(opts ...Option) Manager {
-	m := &manager{
-		shutdownTimeout: NoTimeout,
-	}
+func NewManager(opts ...Option) *Manager {
+	m := &Manager{shutdownTimeout: NoTimeout}
+
 	for _, o := range opts {
-		o(m)
+		o.apply(m)
 	}
+
 	return m
 }
 
-type manager struct {
+// Manager helps to run multiple components
+// and waits for them to complete
+type Manager struct {
 	mu sync.Mutex
 
 	internalCtx    context.Context
@@ -49,7 +41,7 @@ type manager struct {
 
 // Add will enqueue the Component to run it,
 // last added component will be started first
-func (m *manager) Add(c Component) error {
+func (m *Manager) Add(c Component) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -68,7 +60,7 @@ func (m *manager) Add(c Component) error {
 // Run starts running the registered components. The components will stop running
 // when the context is closed. Run blocks until the context is closed or
 // an error occurs.
-func (m *manager) Run(ctx context.Context) (err error) {
+func (m *Manager) Run(ctx context.Context) (err error) {
 	m.internalCtx, m.internalCancel = context.WithCancel(ctx)
 
 	defer func() {
@@ -89,7 +81,7 @@ func (m *manager) Run(ctx context.Context) (err error) {
 	}
 }
 
-func (m *manager) start() {
+func (m *Manager) start() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.started = true
@@ -101,7 +93,7 @@ func (m *manager) start() {
 	}
 }
 
-func (m *manager) startComponent(c Component) {
+func (m *Manager) startComponent(c Component) {
 	m.wg.Add(1)
 	go func() {
 		defer m.wg.Done()
@@ -111,7 +103,7 @@ func (m *manager) startComponent(c Component) {
 	}()
 }
 
-func (m *manager) engageStopProcedure() error {
+func (m *Manager) engageStopProcedure() error {
 	var shutdownCancel context.CancelFunc
 	if m.shutdownTimeout > 0 {
 		m.shutdownCtx, shutdownCancel = context.WithTimeout(context.Background(), m.shutdownTimeout)

@@ -11,7 +11,7 @@ import (
 )
 
 func ExampleNewManager() {
-	m := xrun.NewManager(xrun.WithGracefulShutdownTimeout(xrun.NoTimeout))
+	m := xrun.NewManager(xrun.ShutdownTimeout(xrun.NoTimeout))
 
 	if err := m.Add(component.HTTPServer(component.HTTPServerOptions{Server: &http.Server{}})); err != nil {
 		panic(err)
