@@ -1,12 +1,12 @@
 # xrun 
 
-[![build][github-workflow-badge]][github-workflow]
+[![test][github-workflow-badge]][github-workflow]
 [![codecov][coverage-badge]][codecov]
 [![PkgGoDev][pkg-go-dev-xrun-badge]][pkg-go-dev-xrun]
 [![Go Report Card][go-report-card-badge]][go-report-card]
 
 > Utilities around running multiple components
-> which are long running components, example: 
+> which are long-running components, example: 
 > an HTTP server or a background worker
 
 ## Install
@@ -27,9 +27,9 @@ Manager source modified
 from [sigs.k8s.io/controller-runtime](https://github.com/kubernetes-sigs/controller-runtime/tree/a1e2ea2/pkg/manager)
 
 [github-workflow-badge]:
-https://github.com/gojekfarm/xrun/workflows/build/badge.svg
+https://github.com/gojekfarm/xrun/workflows/test/badge.svg
 [github-workflow]:
-https://github.com/gojekfarm/xrun/actions?query=workflow%3Abuild
+https://github.com/gojekfarm/xrun/actions?query=workflow%3Atest
 [coverage-badge]: https://codecov.io/gh/gojekfarm/xrun/branch/main/graph/badge.svg?token=QPLV2ZDE84
 [codecov]: https://codecov.io/gh/gojekfarm/xrun
 [pkg-go-dev-xrun-badge]: https://pkg.go.dev/badge/github.com/gojekfarm/xrun
