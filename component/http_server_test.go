@@ -2,7 +2,7 @@ package component
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -46,7 +46,7 @@ func (s *HTTPServerSuite) TestHTTPServer() {
 					defer func() {
 						s.NoError(resp.Body.Close())
 					}()
-					if d, err := ioutil.ReadAll(resp.Body); err == nil {
+					if d, err := io.ReadAll(resp.Body); err == nil {
 						return string(d) == "pong"
 					}
 					return false
