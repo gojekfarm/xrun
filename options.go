@@ -18,8 +18,3 @@ type Option interface {
 type ShutdownTimeout time.Duration
 
 func (t ShutdownTimeout) apply(m *Manager) { m.shutdownTimeout = time.Duration(t) }
-
-// WithGracefulShutdownTimeout allows max timeout after which Manager exits.
-//
-// Deprecated: Use ShutdownTimeout instead.
-func WithGracefulShutdownTimeout(timeout time.Duration) Option { return ShutdownTimeout(timeout) }
