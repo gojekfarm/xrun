@@ -3,7 +3,7 @@ name: build
 on:
   push:
     tags: [v\d+.\d+.\d+]
-    branches: [master]
+    branches: [main]
   pull_request:
 
 jobs:
@@ -11,21 +11,33 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [1.18.x]
+        go-version: [1.18.x, 1.19.x, 1.20.x]
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ matrix.go-version }}
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - name: Test
-        run: go test -race ./...
-      - name: Test Experimental SubModule
-        run: cd ./component/x && go test -race ./... && cd ../..
+    - name: Install Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go-version }}
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    - name: Tools bin cache
+      uses: actions/cache@v3
+      with:
+        path: .bin
+        key: ${{ runner.os }}-${{ hashFiles('Makefile') }}
+    - name: Install jq
+      uses: dcarbone/install-jq-action@v1.0.1
+    - name: Test
+      run: make ci
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        fail_ci_if_error: true
+        verbose: true

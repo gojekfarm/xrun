@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gojekfarm/xrun"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/gojekfarm/xrun"
 )
 
 type HTTPServerSuite struct {
@@ -42,6 +43,9 @@ func (s *HTTPServerSuite) TestHTTPServer() {
 				return func() bool {
 					resp, err := http.Get("http://localhost:8888/ping")
 					s.NoError(err)
+					defer func() {
+						s.NoError(resp.Body.Close())
+					}()
 					if d, err := ioutil.ReadAll(resp.Body); err == nil {
 						return string(d) == "pong"
 					}

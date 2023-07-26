@@ -54,6 +54,7 @@ func (m *Manager) Add(c Component) error {
 	}
 
 	m.components = append(m.components, c)
+
 	return nil
 }
 
@@ -95,8 +96,10 @@ func (m *Manager) start() {
 
 func (m *Manager) startComponent(c Component) {
 	m.wg.Add(1)
+
 	go func() {
 		defer m.wg.Done()
+
 		if err := c.Run(m.internalCtx); err != nil && !errors.Is(err, context.Canceled) {
 			m.errChan <- err
 		}
@@ -114,17 +117,21 @@ func (m *Manager) engageStopProcedure() error {
 	m.stopping = true
 
 	var retErr *multierror.Error
+
 	retErrCh := make(chan *multierror.Error, 1)
 
 	go m.aggregateErrors(retErrCh)
 	go func() {
 		m.wg.Wait()
 		close(m.errChan)
+
 		retErr = <-retErrCh
+
 		shutdownCancel()
 	}()
 
 	<-m.shutdownCtx.Done()
+
 	if err := m.shutdownCtx.Err(); err != nil && !errors.Is(err, context.Canceled) {
 		return fmt.Errorf("not all components were shutdown completely within grace period(%s): %w", m.shutdownTimeout, err)
 	}
@@ -139,6 +146,7 @@ func (m *Manager) cancelFunc() context.CancelFunc {
 	} else {
 		m.shutdownCtx, shutdownCancel = context.WithCancel(context.Background())
 	}
+
 	return shutdownCancel
 }
 

@@ -1,8 +1,9 @@
 package grpc_test
 
 import (
-	xgrpc "github.com/gojekfarm/xrun/component/x/grpc"
 	"google.golang.org/grpc"
+
+	xgrpc "github.com/gojekfarm/xrun/component/x/grpc"
 )
 
 func ExampleServer() {
