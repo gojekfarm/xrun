@@ -32,6 +32,5 @@ of long-running components like an HTTP server.
 			os.Exit(1)
 		}
 	}
-
 */
 package component

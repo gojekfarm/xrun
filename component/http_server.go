@@ -22,10 +22,12 @@ func HTTPServer(opts HTTPServerOptions) xrun.ComponentFunc {
 
 	return func(ctx context.Context) error {
 		errCh := make(chan error, 1)
+
 		go func() {
 			if ps != nil {
 				ps()
 			}
+
 			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				errCh <- err
 			}
@@ -43,6 +45,7 @@ func HTTPServer(opts HTTPServerOptions) xrun.ComponentFunc {
 		if pst != nil {
 			pst()
 		}
+
 		return srv.Shutdown(shutdownCtx)
 	}
 }

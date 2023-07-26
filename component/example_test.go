@@ -3,10 +3,11 @@ package component_test
 import (
 	"context"
 	"fmt"
-	"github.com/gojekfarm/xrun/component"
 	"net/http"
 	"os"
 	"os/signal"
+
+	"github.com/gojekfarm/xrun/component"
 )
 
 func ExampleHTTPServer() {

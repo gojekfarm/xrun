@@ -4,8 +4,9 @@ import (
 	"context"
 	"net"
 
-	"github.com/gojekfarm/xrun"
 	"google.golang.org/grpc"
+
+	"github.com/gojekfarm/xrun"
 )
 
 // Options holds options for Server
