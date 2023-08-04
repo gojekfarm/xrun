@@ -254,9 +254,6 @@ func (s *ManagerSuite) TestNewManager() {
 					rr := r
 					s.NoError(m.Add(ComponentFunc(func(ctx context.Context) error {
 						order = append(order, ii+1)
-						defer func() {
-							order = append(order, ii+1)
-						}()
 						return rr.Run(ctx)
 					})))
 				}
@@ -272,7 +269,7 @@ func (s *ManagerSuite) TestNewManager() {
 				cancel()
 
 				t.wantErr(s.T(), <-errCh)
-				s.Equal(t.wantOrder, order[:len(t.wantOrder)])
+				s.Equal(t.wantOrder, order)
 			})
 		}
 	})
