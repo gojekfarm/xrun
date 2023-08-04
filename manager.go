@@ -12,7 +12,10 @@ import (
 
 // NewManager creates a Manager and applies provided Option
 func NewManager(opts ...Option) *Manager {
-	m := &Manager{shutdownTimeout: NoTimeout}
+	m := &Manager{
+		shutdownTimeout: NoTimeout,
+		maxStartWait:    defaultMaxStartWait,
+	}
 
 	for _, o := range opts {
 		o.apply(m)
@@ -24,13 +27,16 @@ func NewManager(opts ...Option) *Manager {
 // Manager helps to run multiple components
 // and waits for them to complete
 type Manager struct {
-	mu sync.Mutex
+	strategy     Strategy
+	maxStartWait time.Duration
+	mu           sync.Mutex
 
 	internalCtx    context.Context
 	internalCancel context.CancelFunc
 
-	components []Component
-	wg         sync.WaitGroup
+	components       []Component
+	componentCancels []context.CancelFunc
+	wg               sync.WaitGroup
 
 	started         bool
 	stopping        bool
@@ -87,20 +93,38 @@ func (m *Manager) start() {
 	defer m.mu.Unlock()
 	m.started = true
 
-	for _, c := range m.components {
-		if c != nil {
-			m.startComponent(c)
+	switch m.strategy {
+	case OrderedStart:
+		for _, c := range m.components {
+			if c != nil {
+				notify := newNotifyCtx(m.internalCtx)
+				nCtx, cancel := context.WithCancel(notify)
+				m.startComponent(c, nCtx)
+				m.componentCancels = append([]context.CancelFunc{cancel}, m.componentCancels...)
+
+				// Block until the component has started or the timeout has elapsed.
+				select {
+				case <-started(notify):
+				case <-time.After(m.maxStartWait):
+				}
+			}
+		}
+	case DefaultStartStop:
+		for _, c := range m.components {
+			if c != nil {
+				m.startComponent(c, m.internalCtx)
+			}
 		}
 	}
 }
 
-func (m *Manager) startComponent(c Component) {
+func (m *Manager) startComponent(c Component, ctx context.Context) {
 	m.wg.Add(1)
 
 	go func() {
 		defer m.wg.Done()
 
-		if err := c.Run(m.internalCtx); err != nil && !errors.Is(err, context.Canceled) {
+		if err := c.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
 			m.errChan <- err
 		}
 	}()
@@ -110,7 +134,14 @@ func (m *Manager) engageStopProcedure() error {
 	shutdownCancel := m.cancelFunc()
 	defer shutdownCancel()
 
-	m.internalCancel()
+	switch m.strategy {
+	case OrderedStart:
+		for _, cancel := range m.componentCancels {
+			cancel()
+		}
+	case DefaultStartStop:
+		m.internalCancel()
+	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
