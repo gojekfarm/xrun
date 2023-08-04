@@ -3,6 +3,7 @@ package xrun
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -249,11 +250,14 @@ func (s *ManagerSuite) TestNewManager() {
 				m := NewManager(append(t.options, OrderedStart)...)
 
 				var order []int
+				var mu sync.Mutex
 				for i, r := range t.components {
 					ii := i
 					rr := r
 					s.NoError(m.Add(ComponentFunc(func(ctx context.Context) error {
+						mu.Lock()
 						order = append(order, ii+1)
+						mu.Unlock()
 						return rr.Run(ctx)
 					})))
 				}

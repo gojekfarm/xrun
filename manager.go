@@ -134,6 +134,10 @@ func (m *Manager) engageStopProcedure() error {
 	shutdownCancel := m.cancelFunc()
 	defer shutdownCancel()
 
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.stopping = true
+
 	switch m.strategy {
 	case OrderedStart:
 		for _, cancel := range m.componentCancels {
@@ -142,10 +146,6 @@ func (m *Manager) engageStopProcedure() error {
 	case DefaultStartStop:
 		m.internalCancel()
 	}
-
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.stopping = true
 
 	var retErr *multierror.Error
 
