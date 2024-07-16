@@ -42,16 +42,16 @@ test-xml: test-cov gocov-xml
 # ========= Helpers ===========
 
 golangci-lint:
-	$(call install-if-needed,GOLANGCI_LINT,github.com/golangci/golangci-lint/cmd/golangci-lint,v1.53.3)
+	$(call install-if-needed,GOLANGCI_LINT,github.com/golangci/golangci-lint/cmd/golangci-lint,v1.59.1)
 
 gci:
-	$(call install-if-needed,GCI_BIN,github.com/daixiang0/gci,v0.10.1)
+	$(call install-if-needed,GCI_BIN,github.com/daixiang0/gci,v0.13.4)
 
 gocov:
-	$(call install-if-needed,GOCOV,github.com/axw/gocov/gocov,v1.0.0)
+	$(call install-if-needed,GOCOV,github.com/axw/gocov/gocov,v1.1.0)
 
 gocov-xml:
-	$(call install-if-needed,GOCOVXML,github.com/AlekSi/gocov-xml,v1.0.0)
+	$(call install-if-needed,GOCOVXML,github.com/AlekSi/gocov-xml,v1.1.0)
 
 is-available = $(if $(wildcard $(LOCAL_GO_BIN_DIR)/$(1)),$(LOCAL_GO_BIN_DIR)/$(1),$(if $(shell command -v $(1) 2> /dev/null),yes,no))
 

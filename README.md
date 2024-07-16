@@ -17,6 +17,8 @@ $ go get github.com/gojekfarm/xrun
 
 ## Usage
 
+> Minimum Required Go Version: 1.20.x
+
 - [API reference][api-docs]
 - [Blog post explaining motivation behind xrun][blog-link]
 - [Reddit post][reddit-link]

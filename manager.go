@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"sync"
 	"time"
-
-	"github.com/hashicorp/go-multierror"
 )
 
 // NewManager creates a Manager and applies provided Option
@@ -116,9 +114,9 @@ func (m *Manager) engageStopProcedure() error {
 	defer m.mu.Unlock()
 	m.stopping = true
 
-	var retErr *multierror.Error
+	var retErr error
 
-	retErrCh := make(chan *multierror.Error, 1)
+	retErrCh := make(chan error, 1)
 
 	go m.aggregateErrors(retErrCh)
 	go func() {
@@ -136,7 +134,7 @@ func (m *Manager) engageStopProcedure() error {
 		return fmt.Errorf("not all components were shutdown completely within grace period(%s): %w", m.shutdownTimeout, err)
 	}
 
-	return retErr.ErrorOrNil()
+	return retErr
 }
 
 func (m *Manager) cancelFunc() context.CancelFunc {
@@ -150,10 +148,10 @@ func (m *Manager) cancelFunc() context.CancelFunc {
 	return shutdownCancel
 }
 
-func (m *Manager) aggregateErrors(ch chan<- *multierror.Error) {
-	var r *multierror.Error
+func (m *Manager) aggregateErrors(ch chan<- error) {
+	var r error
 	for err := range m.errChan {
-		r = multierror.Append(r, err)
+		r = errors.Join(r, err)
 	}
 	ch <- r
 }
