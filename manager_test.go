@@ -35,7 +35,7 @@ func (s *ManagerSuite) TestNewManager() {
 			wantErr: assert.NoError,
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
-					time.Sleep(3 * time.Second)
+					time.Sleep(300 * time.Millisecond)
 					<-ctx.Done()
 					return nil
 				}),
@@ -52,13 +52,13 @@ func (s *ManagerSuite) TestNewManager() {
 		},
 		{
 			name:    "WithGracefulShutdownErrorOnOneComponent",
-			options: []Option{ShutdownTimeout(5 * time.Second)},
+			options: []Option{ShutdownTimeout(time.Second)},
 			wantErr: assert.Error,
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
-					time.Sleep(time.Second)
+					time.Sleep(100 * time.Millisecond)
 					<-ctx.Done()
-					time.Sleep(time.Second)
+					time.Sleep(100 * time.Millisecond)
 					return nil
 				}),
 				ComponentFunc(func(ctx context.Context) error {
@@ -74,15 +74,15 @@ func (s *ManagerSuite) TestNewManager() {
 			wantErr: assert.NoError,
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
-					time.Sleep(5 * time.Second)
+					time.Sleep(500 * time.Millisecond)
 					<-ctx.Done()
-					time.Sleep(5 * time.Second)
+					time.Sleep(500 * time.Millisecond)
 					return nil
 				}),
 				ComponentFunc(func(ctx context.Context) error {
-					time.Sleep(time.Second)
+					time.Sleep(100 * time.Millisecond)
 					<-ctx.Done()
-					time.Sleep(10 * time.Second)
+					time.Sleep(time.Second)
 					return nil
 				}),
 			},
@@ -92,9 +92,8 @@ func (s *ManagerSuite) TestNewManager() {
 			wantErr: assert.NoError,
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
-					time.Sleep(5 * time.Second)
 					<-ctx.Done()
-					time.Sleep(5 * time.Second)
+					time.Sleep(2 * time.Second)
 					return nil
 				}),
 			},
@@ -104,15 +103,15 @@ func (s *ManagerSuite) TestNewManager() {
 			wantErr: assert.NoError,
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
-					time.Sleep(time.Second)
+					time.Sleep(100 * time.Millisecond)
 					<-ctx.Done()
-					time.Sleep(2 * time.Second)
+					time.Sleep(200 * time.Millisecond)
 					return nil
 				}),
 				ComponentFunc(func(ctx context.Context) error {
-					time.Sleep(time.Second)
+					time.Sleep(100 * time.Millisecond)
 					<-ctx.Done()
-					time.Sleep(time.Second)
+					time.Sleep(100 * time.Millisecond)
 					return ctx.Err()
 				}),
 			},
@@ -124,15 +123,15 @@ func (s *ManagerSuite) TestNewManager() {
 			},
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
-					time.Sleep(time.Second)
+					time.Sleep(100 * time.Millisecond)
 					<-ctx.Done()
-					time.Sleep(2 * time.Second)
+					time.Sleep(200 * time.Millisecond)
 					return nil
 				}),
 				ComponentFunc(func(ctx context.Context) error {
-					time.Sleep(time.Second)
+					time.Sleep(100 * time.Millisecond)
 					<-ctx.Done()
-					time.Sleep(time.Second)
+					time.Sleep(100 * time.Millisecond)
 					return errors.New("shutdown error")
 				}),
 			},
@@ -146,17 +145,17 @@ shutdown error 1`, i...)
 			components: []Component{
 				ComponentFunc(func(ctx context.Context) error {
 					<-ctx.Done()
-					time.Sleep(2 * time.Second)
+					time.Sleep(200 * time.Millisecond)
 					return nil
 				}),
 				ComponentFunc(func(ctx context.Context) error {
 					<-ctx.Done()
-					time.Sleep(3 * time.Second)
+					time.Sleep(300 * time.Millisecond)
 					return errors.New("shutdown error 1")
 				}),
 				ComponentFunc(func(ctx context.Context) error {
 					<-ctx.Done()
-					time.Sleep(2 * time.Second)
+					time.Sleep(200 * time.Millisecond)
 					return errors.New("shutdown error 2")
 				}),
 			},
@@ -178,7 +177,7 @@ shutdown error 1`, i...)
 				errCh <- m.Run(ctx)
 			}()
 
-			time.Sleep(1 * time.Second)
+			time.Sleep(300 * time.Millisecond)
 			cancel()
 
 			t.wantErr(s.T(), <-errCh)
@@ -196,7 +195,7 @@ func (s *ManagerSuite) TestAddNewComponentAfterStop() {
 		errCh <- m.Run(ctx)
 	}()
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(100 * time.Millisecond)
 	cancel()
 
 	s.NoError(<-errCh)
@@ -216,7 +215,7 @@ func (s *ManagerSuite) TestAddNewComponentAfterStart() {
 		errCh <- m.Run(ctx)
 	}()
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(100 * time.Millisecond)
 
 	s.EqualError(m.Add(ComponentFunc(func(ctx context.Context) error {
 		return nil

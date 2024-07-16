@@ -123,6 +123,8 @@ func (s *HTTPServerSuite) TestHTTPServer() {
 			} else {
 				s.NoError(<-errCh)
 			}
+
+			time.Sleep(50 * time.Millisecond) // for goroutine to exit
 		})
 	}
 }
