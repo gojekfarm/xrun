@@ -44,6 +44,10 @@ func (s *ServerTestSuite) TestServer() {
 				ml := &mockListener{}
 				ml.On("Accept").Return(nil, errors.New("unknown listen error"))
 				ml.On("Close").Return(nil)
+				ml.On("Addr").Return(&net.UnixAddr{
+					Net:  "unix",
+					Name: "test.sock",
+				})
 				return ml, nil
 			},
 			wantErr: true,
@@ -70,7 +74,7 @@ func (s *ServerTestSuite) TestServer() {
 		s.Run(t.name, func() {
 			var opts []xrun.Option
 			if t.wantShutdownTimeout {
-				opts = append(opts, xrun.WithGracefulShutdownTimeout(time.Nanosecond))
+				opts = append(opts, xrun.ShutdownTimeout(time.Nanosecond))
 			}
 			m := xrun.NewManager(opts...)
 			srv := grpc.NewServer()
@@ -102,6 +106,8 @@ func (s *ServerTestSuite) TestServer() {
 			} else {
 				s.NoError(<-errCh)
 			}
+
+			time.Sleep(50 * time.Millisecond) // wait for goroutine to finish
 
 			if ml, ok := l.(*mockListener); ok {
 				ml.AssertExpectations(s.T())
