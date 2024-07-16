@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"net"
 
 	"google.golang.org/grpc"
@@ -39,7 +40,7 @@ func Server(opts Options) xrun.ComponentFunc {
 				ps()
 			}
 
-			if err := srv.Serve(l); err != nil && err != grpc.ErrServerStopped {
+			if err := srv.Serve(l); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 				errCh <- err
 			}
 		}(errCh)

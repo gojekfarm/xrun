@@ -2,6 +2,7 @@ package component
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/gojekfarm/xrun"
@@ -28,7 +29,7 @@ func HTTPServer(opts HTTPServerOptions) xrun.ComponentFunc {
 				ps()
 			}
 
-			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				errCh <- err
 			}
 		}()
