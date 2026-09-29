@@ -8,9 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/fx"
+
 	"github.com/gojekfarm/xrun"
 	xfx "github.com/gojekfarm/xrun/component/x/fx"
-	"go.uber.org/fx"
 )
 
 func appWithComponents(t *testing.T, components ...xrun.Component) (*fx.App, *xfx.Runner) {

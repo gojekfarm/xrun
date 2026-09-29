@@ -8,8 +8,9 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/gojekfarm/xrun"
 	uberfx "go.uber.org/fx"
+
+	"github.com/gojekfarm/xrun"
 )
 
 // ErrUnexpectedExit means a long-running component returned nil before its
@@ -43,19 +44,22 @@ type Runner struct {
 // may skip Runner's OnStart entirely while rolling back a failed startup.
 func New(lc uberfx.Lifecycle, shutdowner uberfx.Shutdowner, components ...xrun.Component) (*Runner, error) {
 	if isNil(lc) || isNil(shutdowner) {
-		return nil, errors.New("Fx lifecycle and shutdowner are required")
+		return nil, errors.New("fx lifecycle and shutdowner are required")
 	}
+
 	for i, component := range components {
 		if isNil(component) {
 			return nil, fmt.Errorf("component %d is nil", i)
 		}
 	}
+
 	r := &Runner{
 		components: append([]xrun.Component(nil), components...),
 		shutdowner: shutdowner,
 		done:       make(chan struct{}),
 	}
 	lc.Append(uberfx.Hook{OnStart: r.start, OnStop: r.stop})
+
 	return r, nil
 }
 
@@ -71,6 +75,7 @@ func (r *Runner) Done() <-chan struct{} { return r.done }
 func (r *Runner) Active() bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	return r.remaining > 0
 }
 
@@ -79,30 +84,40 @@ func (r *Runner) Active() bool {
 func (r *Runner) Err() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	return r.err
 }
 
 func (r *Runner) start(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	if r.started {
 		return errors.New("component runner already started")
 	}
+
 	r.started = true
+
 	if err := ctx.Err(); err != nil {
 		r.stopping = true
 		close(r.done)
+
 		return err
 	}
+
 	r.ctx, r.cancel = context.WithCancel(context.Background())
 	r.remaining = len(r.components)
+
 	if r.remaining == 0 {
 		close(r.done)
+
 		return nil
 	}
+
 	for i, component := range r.components {
 		go r.run(i, component)
 	}
+
 	return nil
 }
 
@@ -112,25 +127,32 @@ func (r *Runner) run(index int, component xrun.Component) {
 	r.mu.Lock()
 	notify := false
 	unexpected := r.ctx.Err() == nil
+
 	if err == nil && unexpected {
 		err = ErrUnexpectedExit
 	}
+
 	if err != nil && (!onlyCancellation(err) || unexpected) {
 		r.err = errors.Join(r.err, fmt.Errorf("component %d: %w", index, err))
+
 		if !r.stopping {
 			r.stopping = true
 			r.cancel()
+
 			notify = true
 		}
 	}
 	r.mu.Unlock()
+
 	if notify {
 		// This component goroutine owns the notification. Done is closed
 		// only after the notification finishes.
 		r.notifyShutdown()
 	}
+
 	r.mu.Lock()
 	r.remaining--
+
 	if r.remaining == 0 {
 		close(r.done)
 	}
@@ -141,7 +163,9 @@ func isNil(value interface{}) bool {
 	if value == nil {
 		return true
 	}
+
 	v := reflect.ValueOf(value)
+
 	switch v.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
 		return v.IsNil()
@@ -156,21 +180,27 @@ func onlyCancellation(err error) bool {
 	if err == context.Canceled {
 		return true
 	}
+
 	if many, ok := err.(interface{ Unwrap() []error }); ok {
 		children := many.Unwrap()
+
 		if len(children) == 0 {
 			return false
 		}
+
 		for _, child := range children {
 			if !onlyCancellation(child) {
 				return false
 			}
 		}
+
 		return true
 	}
+
 	if one, ok := err.(interface{ Unwrap() error }); ok {
 		return onlyCancellation(one.Unwrap())
 	}
+
 	return false
 }
 
@@ -186,9 +216,12 @@ func (r *Runner) stop(ctx context.Context) error {
 	r.mu.Lock()
 	if !r.started {
 		r.mu.Unlock()
+
 		return nil
 	}
+
 	r.stopping = true
+
 	if r.cancel != nil {
 		r.cancel()
 	}
@@ -204,6 +237,7 @@ func (r *Runner) stop(ctx context.Context) error {
 			return r.Err()
 		default:
 		}
+
 		return errors.Join(r.Err(), fmt.Errorf("components still running after Fx stop deadline: %w", ctx.Err()))
 	}
 }

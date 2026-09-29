@@ -7,9 +7,10 @@ import (
 	"net"
 	"time"
 
+	"go.uber.org/fx"
+
 	"github.com/gojekfarm/xrun"
 	xfx "github.com/gojekfarm/xrun/component/x/fx"
-	"go.uber.org/fx"
 )
 
 // The listener is bound in an earlier OnStart hook, so a bind failure fails
