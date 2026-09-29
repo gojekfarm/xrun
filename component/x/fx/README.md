@@ -25,6 +25,11 @@ If `Close` ignores its context, Fx cannot forcibly finish cleanup within the dea
 On failed or expired preparation, rollback `Close` receives the startup context, which may already be canceled; callers must design cleanup to release resources in that case or handle a reported cleanup error.
 After a stop timeout, a later cleanup or process termination is the application's responsibility.
 
-`Run` must join its own child work before returning.
+`Run` must join its own child work before returning, or register that work as another supervised component.
 For an HTTP server, drain active handlers before closing their database or cache clients; joining only `Serve` does not establish that handlers are finished.
+`component.NewPreparedHTTPServer` binds during `Prepare` and reports a fatal `Serve` exit promptly.
+Register both the returned server and its `HandlerDrain()` component in the `xrun` group when handlers use other prepared owners.
+The drain component keeps the bridge's join gate active until all accepted handlers return, including after a fatal listener error.
+If an uncooperative handler exceeds the stop deadline, the bridge withholds every prepared owner's `Close`.
+The caller can inspect `Addr()` after preparation for the actual bound address.
 The bridge cannot infer generic readiness or force noncooperative code to stop.
