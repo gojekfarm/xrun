@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.22.5
 
 require (
-	github.com/gojekfarm/xrun v0.4.0
+	github.com/gojekfarm/xrun v0.4.1-0.20260929184800-4de7f472d6d4
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/fx v1.23.0
 	golang.org/x/net v0.27.0
